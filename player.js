@@ -1,11 +1,12 @@
 (function (window, document) {
     const video = document.getElementById('video');
     const play = document.getElementById('play');
-    const progressIndicator = document.getElementById('progressIndicator');
     const controls = document.getElementById('controls');
 
     const progressHolder = document.getElementById("progress");
     const playProgressBar = document.getElementById("play_progress");
+
+    const currentTime = document.getElementById("currentTime");
 
     let videoPlayer = {
         initControls: function () {
@@ -78,7 +79,13 @@
             })();
         },
         updatePlayProgress : function(){
-            // playProgressBar.style.width = ( (video.currentTime / video.duration) * (progressHolder.offsetWidth) ) + "px";
+            playProgressBar.style.left = ( (video.currentTime / video.duration) * (progressHolder.offsetWidth) ) + "px";
+            // update currentTime text
+            const m = Math.floor(video.currentTime / 60) + ''
+            const s = Math.floor(video.currentTime % 60) + ''
+            currentTime.innerText = [
+                m.length === 1 ? '0' + m : m, s.length === 1 ? '0' + s : s
+            ].join(':')
         },
         stopTrackingPlayProgress: function () {
             clearTimeout(playProgressInterval);
