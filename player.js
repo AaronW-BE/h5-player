@@ -1,6 +1,7 @@
 (function (window, document) {
     const video = document.getElementById('video');
     const play = document.getElementById('play');
+    const progressIndicator = document.getElementById('progressIndicator');
     const controls = document.getElementById('controls');
 
     const progressHolder = document.getElementById("progress");
