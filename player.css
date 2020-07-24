@@ -1,3 +1,6 @@
+body {
+    background-color: #eeeeee;
+}
 video {
     width: 100vw;
 }
@@ -18,6 +21,7 @@ video {
 }
 #controls .control {
     margin: 5px;
+    color: #ffffff;
 }
 
 .control-btn {
@@ -77,3 +81,35 @@ video {
 /*    background-color: #f54040;*/
 /*    transition: all .5s;*/
 /* }*/
+
+
+.progress-indicator-wrapper {
+    position: absolute;
+    bottom: 0;
+    height: 3px;
+    width: 100%;
+    background-color: #ff0000;
+}
+
+.player:hover .progress-indicator-wrapper {
+    height: 3px;
+}
+
+.indicator {
+    width: 50px;
+    height: 100%;
+    background-color: #ffffff;
+    position: relative;
+}
+
+.indicator:after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: translateX(50%) translateY(-1.5px);
+}
