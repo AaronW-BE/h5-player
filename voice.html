@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voice Player</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0,viewport-fit=cover">
+
+    <link rel="stylesheet" href="./audio.css">
+</head>
+<body>
+    <div class="audio-card">
+        <span class="voice-player-card-container dark">
+            <strong class="audio-card-title">正在播放音频</strong>
+            <span class="voice-player-container">
+                <span class="audio-card-opr">
+                    <span class="progress-wrp" id="audio_seekRange">
+                        <span class="audio-card-progress">
+                            <span id="voice_progress" class="audio-card-progress-inner"></span>
+                            <span id="voice_buffer" class="audio-card-progress-buffer"></span>
+                        </span>
+                        <span id="voice_play_dot" class="audio-card-progress-handle"></span>
+                    </span>
+                    <span class="audio-card-tips">
+                    <em id="currentTime">00:00</em>
+                    <em id="duration">00:00</em>
+                    </span>
+                </span>
+                <span class="voice-play-switch" id="playBtn"></span>
+            </span>
+        </span>
+    </div>
+
+    <script>
+        function dom(id) {
+            return document.getElementById(id);
+        }
+
+        function domByClass(clazz) {
+            return document.getElementsByClassName(clazz);
+        }
+        // let audioUrl = 'http://96.ierge.cn/12/185/370503.mp3';
+        let audioUrl = 'http://ting6.yymp3.net:82/new27/gdys/1.mp3';
+        // let audioUrl = 'http://audio04.dmhmusic.com/71_53_T10040589078_128_4_1_0_sdk-cpm/cn/0206/M00/90/77/ChR47F1_nqiAfD0hAD_MGBybIdk026.mp3?xcode=2802cb96b90405eb6b2a9c069ed09444846f69e';
+
+        class MpAudio{
+            constructor() {
+                this._player = null;
+
+                this.canplay = false;
+
+                this.onloaded = null;
+
+                this.onPause = null;
+                this.onPlay = null;
+                this.onEnded = null;
+
+                this.init();
+            }
+
+            set player(dom) {
+                this._player = dom;
+            }
+            get player() {
+                return this._player;
+            }
+
+            setSource(src) {
+                this.player.src = src;
+                this.player.pause();
+            }
+
+            get isPlaying() {
+                if (this.player) {
+                    if (this.player.ended) {
+                        return false;
+                    }
+                    return !this.player.paused;
+                }
+            }
+
+            play() {
+                if (this.player && this.canplay) {
+                    this.player.play();
+                    this.onPlay();
+                    return;
+                }
+                throw new Error('player cannot play');
+            }
+
+            pause() {
+                if (this.player && this.isPlaying) {
+                    this.player.pause();
+                    this.onPause();
+                    return;
+                }
+                throw new Error('player cannot play');
+            }
+
+            init() {
+                let dom = document.createElement('audio');
+                dom.controls = true;
+                dom.style.display = 'none';
+                dom.volume = 1;
+                this.player = dom;
+
+                dom.onended = () => {
+                    this.onEnded();
+                }
+
+                dom.onplay = () => {
+                    this.onPlay();
+                }
+                dom.onpause = () => {
+                    this.onPause();
+                }
+                dom.onloadeddata = () => {
+                    console.log('player on loaded');
+                    this.onloaded();
+                };
+                dom.oncanplay = () => {
+                    console.log('can play')
+                    this.canplay = true;
+                };
+                document.body.appendChild(dom);
+            }
+        }
+        let player = new MpAudio();
+
+        player.setSource(audioUrl);
+
+        player.onPlay = () => {
+            dom('playBtn').classList.add('audio-playing');
+        }
+
+        const onEnd = () => {
+            dom('playBtn').classList.remove('audio-playing');
+        }
+        player.onPause = onEnd
+        player.onEnded = onEnd
+
+        dom('playBtn').addEventListener('click', function () {
+            if (player.isPlaying) {
+                player.pause();
+            } else {
+                player.play();
+            }
+        });
+        let duration
+
+        dom('audio_seekRange').addEventListener('click', function (e) {
+            let parent = e.target.offsetParent;
+            const {offsetX} = e;
+
+            let percent = offsetX / parent.offsetWidth;
+            dom('voice_play_dot').style.left = percent * 100 + '%';
+            player.player.currentTime = duration * percent;
+        });
+
+        let startPosition;
+        let endPosition;
+        let touchPercent;
+        let previousPercent;
+        dom('voice_play_dot').addEventListener('touchstart', function (e) {
+            const {changedTouches} = e;
+            console.log('touch start')
+            console.log(changedTouches);
+            if (changedTouches.length === 1) {
+                let {clientX} = changedTouches[0];
+                startPosition = clientX;
+                previousPercent = this.style.left || '0%';
+            }
+        })
+
+        dom('voice_play_dot').addEventListener('touchmove', function (e) {
+            const {changedTouches} = e;
+            if (changedTouches.length === 1) {
+                let {clientX} = changedTouches[0];
+                endPosition = clientX;
+
+                let dx = endPosition - startPosition;
+                let parent = e.target.offsetParent;
+
+                console.log('dx', dx);
+                let percent = dx / parent.offsetWidth;
+                console.log('percent', percent);
+
+
+                let previousPercentVal = parseInt(previousPercent.substr(0, previousPercent.length - 1)) / 100;
+
+                console.log('pre', previousPercentVal);
+                percent += previousPercentVal;
+                console.log('percent', percent);
+                if (percent > 1) {
+                    percent = 1;
+                }
+                if (percent <= 0) {
+                    percent = 0;
+                }
+                touchPercent = percent;
+                dom('voice_play_dot').style.left =  percent * 100 + '%';
+            }
+        });
+        dom('voice_play_dot').addEventListener('touchend', function (e) {
+            const {changedTouches} = e;
+            if (changedTouches.length === 1) {
+                dom('voice_progress').style.width = touchPercent + '%';
+                dom('voice_play_dot').style.left = touchPercent * 100 + '%';
+                player.player.currentTime = duration * touchPercent;
+                player.play();
+            }
+        })
+
+        player.onloaded = () => {
+            duration = player.player.duration;
+            console.log('on loaded');
+            dom('duration').innerText = timeFormat(player.player.duration);
+        }
+        function timeFormat(seconds) {
+            let m = Math.floor(seconds / 60);
+            let s = Math.floor(seconds % 60);
+            return `${m > 9 ? m : '0' + m}:${s > 9 ? s : '0' + s}`
+        }
+        setInterval(() => {
+            dom('currentTime').innerText = timeFormat(player.player.currentTime);
+
+            const progress = player.player.currentTime / duration * 100;
+
+            const bufferedProgress = player.player.buffered.end(player.player.buffered.length - 1) / duration * 100;
+            dom('voice_buffer').style.width = bufferedProgress + '%';
+            dom('voice_play_dot').style.left = progress + '%';
+            dom('voice_progress').style.width = progress + '%';
+        }, 500);
+
+
+    </script>
+</body>
+</html>
